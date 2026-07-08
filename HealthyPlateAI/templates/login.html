@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Masuk - Healthy Plate AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white p-8 rounded-3xl shadow-xl border border-gray-100 max-w-md w-full">
+        <h2 class="text-3xl font-extrabold text-slate-900 tracking-tight">Selamat Datang 👋</h2>
+        <p class="text-gray-500 text-sm mt-1 mb-6">Silakan masuk untuk mengakses dashboard gizi pribadi Anda.</p>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, msg in messages %}
+              <div class="p-3 mb-4 rounded-xl text-xs font-bold {{ 'bg-emerald-50 text-emerald-700' if category=='success' else 'bg-red-50 text-red-700' }}">{{ msg }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <form action="/login" method="POST" class="space-y-4">
+            <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">Email Anda</label>
+                <input type="email" name="email" required class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-emerald-600">
+            </div>
+            <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">Password</label>
+                <input type="password" name="password" required class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-emerald-600">
+            </div>
+            <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl transition shadow-lg shadow-emerald-600/10">Masuk Aplikasi</button>
+        </form>
+        <p class="text-xs text-center text-gray-500 mt-6">Belum punya akun? <a href="/register" class="text-emerald-600 font-bold hover:underline">Daftar sekarang</a></p>
+    </div>
+</body>
+</html>

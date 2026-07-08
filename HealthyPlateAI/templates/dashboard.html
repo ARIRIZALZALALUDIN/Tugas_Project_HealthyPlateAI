@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Profil Gizi Anda</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
+</head>
+<body class="bg-[#f8faf9] text-slate-900 min-h-screen">
+
+    <!-- NAVBAR MINI -->
+    <header class="bg-white border-b border-gray-100 py-5 px-6 lg:px-8 shadow-sm">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <a href="/" class="font-extrabold text-lg text-slate-900">🥗 Healthy Plate <span class="text-emerald-600">AI</span></a>
+            <div class="flex items-center gap-4">
+                <span class="text-sm font-semibold text-slate-700">Halo, {{ user.name }}!</span>
+                <a href="/logout" class="text-xs bg-red-50 text-red-600 font-bold px-3 py-1.5 rounded-lg hover:bg-red-100 transition">Keluar</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-6 lg:px-8 py-10 grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- KOLOM KIRI: TARGET KALORI PERSONAL (ALGORITMA BMR) -->
+        <div class="lg:col-span-4 space-y-6">
+            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-md">
+                <h3 class="text-lg font-bold text-slate-800 mb-1">Target Kalori Personal</h3>
+                <p class="text-xs text-gray-400 mb-4">Rumus AI BMR berdasarkan profil fisik spesifik Anda.</p>
+                
+                <div class="bg-emerald-600 text-white rounded-xl p-4 text-center mb-5">
+                    <p class="text-xs text-emerald-100 uppercase font-bold tracking-wider">Batas Konsumsi Harian</p>
+                    <p class="text-3xl font-extrabold mt-0.5">{{ user.target_calories }} <span class="text-sm font-normal">kkal</span></p>
+                </div>
+
+                <form action="/dashboard" method="POST" class="space-y-3.5">
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-400 uppercase">Jenis Kelamin</label>
+                        <select name="gender" class="w-full px-3 py-2 border rounded-xl text-sm mt-1">
+                            <option value="Laki-laki" {% if user.gender == 'Laki-laki' %}selected{% endif %}>Laki-laki</option>
+                            <option value="Perempuan" {% if user.gender == 'Perempuan' %}selected{% endif %}>Perempuan</option>
+                        </select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-400 uppercase">Berat Badan (kg)</label>
+                            <input type="number" step="0.1" name="weight" value="{{ user.weight }}" required class="w-full px-3 py-2 border rounded-xl text-sm mt-1">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-400 uppercase">Tinggi Badan (cm)</label>
+                            <input type="number" step="0.1" name="height" value="{{ user.height }}" required class="w-full px-3 py-2 border rounded-xl text-sm mt-1">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-400 uppercase">Usia (Tahun)</label>
+                        <input type="number" name="age" value="{{ user.age }}" required class="w-full px-3 py-2 border rounded-xl text-sm mt-1">
+                    </div>
+                    <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs py-3 rounded-xl transition">Hitung Ulang Kalori</button>
+                </form>
+            </div>
+
+            <!-- LAPORAN BULANAN -->
+            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-md">
+                <h3 class="text-base font-bold text-slate-800 mb-1">📊 Laporan Bulan Ini</h3>
+                <p class="text-xs text-gray-400 mb-4">Akumulasi nutrisi dari foto yang Anda ambil bulan ini.</p>
+                <div class="space-y-3">
+                    <div class="flex justify-between border-b pb-2 text-sm">
+                        <span class="text-gray-500">Total Kalori Terkonsumsi:</span>
+                        <span class="font-bold text-amber-600">{{ stats.total_cal if stats.total_cal else 0 }} kkal</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-500">Total Protein Terkonsumsi:</span>
+                        <span class="font-bold text-emerald-600">{{ stats.total_prot if stats.total_prot else 0 }} g</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- KOLOM KANAN: RIWAYAT MAKANAN (HISTORY LOG) -->
+        <div class="lg:col-span-8 bg-white p-6 sm:p-8 rounded-2xl border border-gray-100 shadow-md">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h3 class="text-xl font-bold text-slate-800">📋 Riwayat Makan (Log History)</h3>
+                    <p class="text-xs text-gray-400 mt-0.5">Daftar makanan yang sudah dipindai dari hari ke hari.</p>
+                </div>
+                <a href="/" class="bg-emerald-600 text-white font-bold text-xs px-4 py-2.5 rounded-xl hover:bg-emerald-700 transition">📷 Scan Foto Baru</a>
+            </div>
+
+            {% if history %}
+            <div class="overflow-hidden border border-gray-100 rounded-xl">
+                <table class="min-w-full divide-y divide-gray-100 text-sm text-left">
+                    <thead class="bg-gray-50 text-gray-400 font-bold text-[11px] uppercase tracking-wider">
+                        <tr>
+                            <th class="px-4 py-3">Tanggal</th>
+                            <th class="px-4 py-3">Foto</th>
+                            <th class="px-4 py-3">Menu Hidangan</th>
+                            <th class="px-4 py-3 text-center">Kalori</th>
+                            <th class="px-4 py-3 text-center">Protein/Lemak/Karbo</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 font-medium text-slate-700">
+                        {% for item in history %}
+                        <tr class="hover:bg-gray-50/50 transition">
+                            <td class="px-4 py-4 text-xs text-gray-400 whitespace-nowrap">{{ item.date_added }}</td>
+                            <td class="px-4 py-4">
+                                <img class="w-10 h-10 object-cover rounded-lg border shadow-sm" src="{{ url_for('uploaded_file', filename=item.image_path) }}">
+                            </td>
+                            <td class="px-4 py-4 font-bold text-slate-900">{{ item.food_name }}</td>
+                            <td class="px-4 py-4 text-center text-amber-600 font-bold">{{ item.calories }} kkal</td>
+                            <td class="px-4 py-4 text-center text-xs text-gray-500">
+                                {{ item.protein }}g / {{ item.fat }}g / {{ item.carbo }}g
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-12 border border-dashed rounded-xl border-gray-200">
+                <span class="text-3xl">🍽️</span>
+                <p class="text-sm font-bold text-gray-400 mt-2">Belum ada riwayat makan.</p>
+                <p class="text-xs text-gray-400">Mulailah memfoto menu makanan sehat Anda di halaman utama.</p>
+            </div>
+            {% endif %}
+        </div>
+    </main>
+
+</body>
+</html>

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Healthy Plate AI - Hasil Analisis Nutrisi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f6fdf8; }
+    </style>
+</head>
+<body class="text-slate-900 min-h-screen flex flex-col justify-between py-8 px-4 sm:px-6 lg:px-8">
+
+    <div class="mx-auto max-w-4xl w-full">
+        
+        <!-- HEADER LOGO -->
+        <div class="flex items-center justify-center gap-2 font-extrabold text-lg mb-8">
+            <span class="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-600 text-base text-white shadow-md shadow-emerald-600/20">🥗</span>
+            <span>Healthy Plate <span class="text-emerald-600">AI</span></span>
+        </div>
+
+        <!-- MAIN CARD -->
+        <div class="bg-white rounded-3xl border border-gray-100 shadow-xl overflow-hidden grid grid-cols-1 md:grid-cols-12">
+            
+            <!-- KOLOM FOTO (KIRI) -->
+            <div class="md:col-span-5 bg-slate-50 p-6 flex flex-col justify-between border-b md:border-b-0 md:border-r">
+                <div>
+                    <span class="text-xs font-bold uppercase tracking-wider text-gray-400">Foto Hidangan Anda</span>
+                    <div class="mt-3 rounded-2xl overflow-hidden shadow-md bg-white border border-gray-200/60 aspect-[4/3] md:aspect-square">
+                        <img class="w-full h-full object-cover" src="{{ url_for('uploaded_file', filename=image) }}" alt="Foto Makanan">
+                    </div>
+                </div>
+                
+                <div class="mt-6 pt-4 border-t border-gray-200/60 hidden md:block">
+                    <p class="text-xs text-gray-400 leading-relaxed">
+                        Foto diproses menggunakan model kognitif visual cerdas dari Google Gemini API.
+                    </p>
+                </div>
+            </div>
+
+            <!-- KOLOM HASIL & NUTRISI (KANAN) -->
+            <div class="md:col-span-7 p-6 sm:p-8 flex flex-col justify-between space-y-6">
+                <div>
+                    <span class="text-xs font-bold uppercase tracking-wider text-emerald-600">Hasil Deteksi Gambar</span>
+                    <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1 mb-3">
+                        {{ detected }}
+                    </h1>
+                    <div class="inline-flex items-center gap-1 bg-emerald-600 text-white font-bold text-xs px-3 py-1.5 rounded-full shadow-sm shadow-emerald-600/20">
+                        ✨ Teridentifikasi oleh AI
+                    </div>
+                </div>
+
+                <hr class="border-gray-100">
+
+                <!-- LOGIKA TAMPILAN JIKA DATA DI CSV ADA -->
+                {% if food %}
+                <div>
+                    <div class="flex justify-between items-baseline mb-4">
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-gray-400">Kandungan Gizi Database</h3>
+                        <span class="text-xs text-gray-500 font-medium">Kecocokan: <strong class="text-emerald-600">{{ food.name }}</strong></span>
+                    </div>
+
+                    <!-- GRID MACRONUTRIENTS MINI INFOGRAFIS -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+                        <div class="bg-amber-50/60 border border-amber-100/50 rounded-2xl p-3 text-center">
+                            <span class="text-lg">🔥</span>
+                            <p class="text-[10px] font-bold text-amber-800/70 uppercase mt-1">Kalori</p>
+                            <p class="text-base font-extrabold text-slate-800 mt-0.5">{{ food.calories }} <span class="text-xs font-normal text-gray-500">kkal</span></p>
+                        </div>
+                        <div class="bg-red-50/60 border border-red-100/50 rounded-2xl p-3 text-center">
+                            <span class="text-lg">🥩</span>
+                            <p class="text-[10px] font-bold text-red-800/70 uppercase mt-1">Protein</p>
+                            <p class="text-base font-extrabold text-slate-800 mt-0.5">{{ food.proteins }} <span class="text-xs font-normal text-gray-500">g</span></p>
+                        </div>
+                        <div class="bg-emerald-50/60 border border-emerald-100/50 rounded-2xl p-3 text-center">
+                            <span class="text-lg">🥑</span>
+                            <p class="text-[10px] font-bold text-emerald-800/70 uppercase mt-1">Lemak</p>
+                            <p class="text-base font-extrabold text-slate-800 mt-0.5">{{ food.fat }} <span class="text-xs font-normal text-gray-500">g</span></p>
+                        </div>
+                        <div class="bg-blue-50/60 border border-blue-100/50 rounded-2xl p-3 text-center">
+                            <span class="text-lg">🍚</span>
+                            <p class="text-[10px] font-bold text-blue-800/70 uppercase mt-1">Karbo</p>
+                            <p class="text-base font-extrabold text-slate-800 mt-0.5">{{ food.carbohydrate }} <span class="text-xs font-normal text-gray-500">g</span></p>
+                        </div>
+                    </div>
+
+                    <!-- PROGRESS BARS DINAMIS BERDASARKAN PROFIL USER -->
+                    <div class="space-y-3.5 bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                        <h4 class="font-bold text-slate-700 text-xs uppercase tracking-wider">Persentase Batas Harian Anda</h4>
+                        
+                        <!-- Logika Hitung Persentase Kalori menggunakan Jinja2 -->
+                        {% set cal_pct = ((food.calories | float / target_calories | float) * 100) | round | int %}
+                        <div class="space-y-1.5">
+                            <div class="flex justify-between text-xs font-semibold text-gray-600">
+                                <span>Porsi Kalori</span>
+                                <span class="text-gray-400">{{ food.calories }} / {{ target_calories }} kkal ({{ cal_pct }}%)</span>
+                            </div>
+                            <div class="w-full h-2 bg-gray-200/70 rounded-full overflow-hidden">
+                                <div class="h-full bg-amber-500 rounded-full" style="width: {{ cal_pct if cal_pct <= 100 else 100 }}%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Info Tambahan Batas Makro Proporsional (Asumsi Protein 15% dari Total Kalori Harian) -->
+                        {% set target_protein = ((target_calories * 0.15) / 4) | round | int %}
+                        {% set prot_pct = ((food.proteins | float / target_protein) * 100) | round | int %}
+                        <div class="space-y-1.5 pt-1">
+                            <div class="flex justify-between text-xs font-semibold text-gray-600">
+                                <span>Porsi Protein</span>
+                                <span class="text-gray-400">{{ food.proteins }} / {{ target_protein }} g ({{ prot_pct }}%)</span>
+                            </div>
+                            <div class="w-full h-2 bg-gray-200/70 rounded-full overflow-hidden">
+                                <div class="h-full bg-emerald-500 rounded-full" style="width: {{ prot_pct if prot_pct <= 100 else 100 }}%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- GAMBAR REFERENSI DATABASE JIKA ADA -->
+                    {% if food.image and food.image != 'nan' %}
+                    <div class="mt-6">
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Gambar Referensi Piring Hidangan</h4>
+                        <img class="w-full h-28 object-cover rounded-xl border border-gray-100 shadow-sm" src="{{ food.image }}" alt="Referensi">
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- JIKA TIDAK DITEMUKAN DI CSV -->
+                {% else %}
+                <div class="bg-red-50 border border-red-100 text-red-800 rounded-2xl p-5 text-sm flex gap-3">
+                    <span class="text-lg">⚠️</span>
+                    <div>
+                        <p class="font-bold">Menu Tidak Terdaftar di Database Gizi Lokal</p>
+                        <p class="text-xs text-red-600/80 mt-1">AI berhasil mengenali hidangan Anda sebagai "{{ detected }}", namun rincian tabel nutrisinya belum tersedia di database lokal saat ini.</p>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- ACTION BUTTONS -->
+                <div class="pt-2 flex flex-col sm:flex-row gap-3">
+                    <a href="/" class="w-full inline-flex justify-center items-center gap-2 px-6 py-3.5 rounded-xl bg-emerald-600 text-white font-bold text-sm shadow-md shadow-emerald-600/10 hover:bg-emerald-700 transition duration-150 text-center">
+                        🔄 Analisis Gambar Lain
+                    </a>
+                    {% if session.get('user_id') %}
+                    <a href="/dashboard" class="w-full inline-flex justify-center items-center gap-2 px-6 py-3.5 rounded-xl bg-slate-900 text-white font-bold text-sm hover:bg-slate-800 transition duration-150 text-center">
+                        📊 Lihat Dashboard & Riwayat Log
+                    </a>
+                    {% endif %}
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <!-- FOOTER MINI -->
+    <div class="text-center text-xs text-gray-400 mt-8">
+        &copy; 2026 Healthy Plate AI. All rights reserved. Powered by Gemini Pro.
+    </div>
+
+</body>
+</html>
